@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CALENDRIER DE L'AVENT DE BEBETO</title>
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #1e1e2f;
+    color: white;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 20px;
+}
+h1 {
+font-size: 90x;
+margin-bottom: 80px;
+}
+
+
+/* GRID DES CASES */
+.grid {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 15px;
+width: 95%;
+margin: auto;
+}
+
+
+/* CASES */
+.case {
+border-radius: 12px;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+cursor: pointer;
+user-select: none;
+padding: 10px;
+position: relative;
+overflow: hidden;
+transform-style: preserve-3d;
+transition: transform 0.3s ease, background 0.3s;
+}
+
+
+.case:hover {
+transform: rotateY(15deg) rotateX(10deg) scale(1.05);
+}
+
+
+.case.ouverte {
+background: #555 !important;
+color: #ccc;
+cursor: not-allowed;
+}
+
+/* NUMÉROS DES CASES */
+.case > div:first-child {
+    font-weight: bold;   /* Met le numéro en gras */
+    font-size: 40px;     /* Taille augmentée */
+}
+
+/* MINI MESSAGE DANS LA CASE */
+.case .mini-message {
+    font-size: 10px;
+    margin-top: 5px;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+/* MINI MESSAGE DANS LA CASE */
+.case .mini-message {
+font-size: 10px;
+margin-top: 5px;
+opacity: 0;
+transition: opacity 0.4s;
+}
+
+
+/* ANIMATION CADEAU */
+.case.ouvre-animation {
+animation: ouvrirCadeau 0.6s ease forwards;
+}
+
+
+@keyframes ouvrirCadeau {
+0%   { transform: scale(1) rotate(0deg); }
+30%  { transform: scale(1.2) rotate(5deg); }
+60%  { transform: scale(0.95) rotate(-5deg); }
+100% { transform: scale(1) rotate(0deg); }
+}
+
+
+/* POPUP */
+#popup-bg {
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.7);
+display: none;
+align-items: center;
+justify-content: center;
+z-index: 20;
+}
+
+
+#popup {
+background: #fff;
+padding: 50px;
+border-radius: 20px;
+max-width: 650px;
+width: 85%;
+box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+text-align: center;
+transform: scale(0.5);
+opacity: 0;
+transition: 0.35s ease;
+}
+
+
+#popup.visible {
+transform: scale(1);
+opacity: 1;
+}
+
+
+#popup-text {
+font-size: 32px;
+color: #333;
+margin-bottom: 25px;
+}
+
+
+#close-btn {
+margin-top: 20px;
+padding: 12px 25px;
+font-size: 20px;
+background: #d53030;
+color: white;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+}
+
+
+/* SNOW FLAKES */
+.snowflake {
+position: fixed;
+top: -10px;
+color: white;
+font-size: 1em;
+user-select: none;
+pointer-events: none;
+z-index: 10;
+animation-name: fall;
+animation-duration: 10s;
+animation-timing-function: linear;
+animation-iteration-count: infinite;
+}
+
+
+@keyframes fall {
+0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+.grid {
+grid-template-columns: repeat(3, 1fr);
+}
+#popup-text { font-size: 24px; }
+}
+</style>
+
+
+</head>
+<body>
+<h1>🎄 CALENDRIER DE L'AVENT DE BEBETO 🎁</h1>
+<div class="grid" id="grid"></div>
+<!-- POPUP -->
+<div id="popup-bg">
+    <div id="popup">
+        <div id="popup-text"></div>
+        <button id="close-btn">Fermer</button>
+    </div>
+</div>
+<!-- SON -->
+<audio id="sound" src="https://www.soundjay.com/button/sounds/button-16.mp3" preload="auto"></audio>
+
+
+<script>
+// ----------------------
+// MESSAGES PERSONNALISÉS PAR JOUR
+// ----------------------
+const messagesPerso = {
+    1: "🧀 Une Soirée raclette à la maison, prépare toi, on va chercher le necéssaire pour ce soir !",
+    2: "📚 Le Livre Adultère de Paulo Coelho",
+    3: "💳 Un Porte Cartes",
+    4: "🥶 Un Collant thermique de chez Calzedonia",
+    5: "🦁 Une écharpe léopard de chez Bershka",
+    6: "👀 Un eyeliner de chez NYX",
+    7: "🧼 Le gel nettoyant visage exfoliant de chez Typology",
+    8: "🍕 Une soirée au restaurant de ton choix pour ce soir !",
+    9: "✅ Un jour de 'tout' ce que tu veux, en illimité !",
+    10: "🍖 Un assortiment de saucissons",
+    11: "🧼 Un sérum anti-marques de chez Typology",
+    12: "🧦 Des paires de chaussettes de chez Décathlon",
+    13: "💎 Des bijoux de chez Lovisa",
+    14: "🥤 Un assortiment de Redbull",
+    15: "🥶 Un Collant thermique de chez Calzedonia",
+    16: "📺 Une soirée cinéma ce soir, du film que tu veux !",
+    17: "👜 Un sac de chez Desigual",
+    18: "🤳 Commande ce que tu veux à manger pour ce soir !",
+    19: "🧥 Une Veste en fourrure (fausse fourrure abuse pas) de chez Bershka",
+    20: "🍬 Un paquet de bonbons Haribo",
+    21: "🍟 Un pâquet de chips saveur sel & vinaigre",
+    22: "🐐 Un paquet de saucisson saveur chevre",
+    23: "🎁 Un pack de coca cherry",
+    24: "🧦 Des paires de chausettes (avec des motifs particuliers) de chez Adidas",
+    25: "🎁 Paire de basket de chez Puma"
+};
+
+// ----------------------
+// CONFIG DES MESSAGES INTERNES (Mini-textes sous les numéros)
+// ----------------------
+const textes = {};
+let start = new Date(2024, 11, 1);
+
+for (let i = 0; i < 25; i++) {
+    let d = new Date(start);
+    d.setDate(start.getDate() + i);
+    textes[d.toDateString()] = "Cadeau du jour " + (i+1);
+}
+
+// ----------------------
+// LOCALSTORAGE POUR LES CASES
+// ----------------------
+let cases = JSON.parse(localStorage.getItem('cases')) || {};
+for (let d in textes) { if (!cases[d]) cases[d]=false; }
+
+// MELANGE DES JOURS
+let jours = Object.keys(textes);
+for (let i = jours.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [jours[i], jours[j]] = [jours[j], jours[i]];
+}
+
+const grid = document.getElementById("grid");
+const popupBg = document.getElementById("popup-bg");
+const popup = document.getElementById("popup");
+const popupText = document.getElementById("popup-text");
+const closeBtn = document.getElementById("close-btn");
+const sound = document.getElementById("sound");
+
+// Couleur aléatoire
+function couleurAleatoire() {
+    const couleurs = [
+        "#d93b3b", "#e67e22", "#f1c40f", "#2ecc71", "#1abc9c",
+        "#3498db", "#9b59b6", "#e84393", "#fd79a8", "#55efc4",
+        "#ffeaa7", "#fab1a0", "#74b9ff", "#a29bfe"
+    ];
+    return couleurs[Math.floor(Math.random() * couleurs.length)];
+}
+
+// ----------------------
+// CREATION DES CASES
+// ----------------------
+jours.forEach(d => {
+    let date = new Date(d);
+    let jour = date.getDate();
+
+    let taille = Math.floor(Math.random() * 50) + 80;
+    let fontSize = Math.floor(Math.random() * 20) + 20;
+
+    let div = document.createElement("div");
+    div.className = "case";
+    div.style.height = taille + "px";
+    div.style.fontSize = fontSize + "px";
+    div.style.background = couleurAleatoire();
+
+    let num = document.createElement("div");
+    num.textContent = jour;
+
+    let mini = document.createElement("div");
+    mini.className = "mini-message";
+    mini.textContent = textes[d];
+    if(cases[d]) mini.style.opacity = 1;
+
+    if(cases[d]) div.classList.add("ouverte");
+
+    div.appendChild(num);
+    div.appendChild(mini);
+
+    div.onclick = () => {
+        if (cases[d]) return;
+
+        cases[d] = true;
+        localStorage.setItem('cases', JSON.stringify(cases));
+
+        div.classList.add("ouvre-animation");
+        setTimeout(() => {
+            mini.style.opacity = 1;
+            div.classList.add("ouverte");
+            ouvrirPopup(messagesPerso[jour]);  // 🔥 message personnalisé
+            sound.play();
+        }, 600);
+    };
+
+    grid.appendChild(div);
+});
+
+// ----------------------
+// POPUP
+// ----------------------
+function ouvrirPopup(txt) {
+    popupText.textContent = txt;
+    popupBg.style.display = "flex";
+    setTimeout(()=>{popup.classList.add("visible");},20);
+}
+
+closeBtn.onclick = () => {
+    popup.classList.remove("visible");
+    setTimeout(()=>{popupBg.style.display="none";},300);
+};
+
+popupBg.onclick = (e)=>{if(e.target===popupBg) closeBtn.onclick();}
+
+// ----------------------
+// FLOCONS DE NEIGE
+// ----------------------
+function creerFlocons(nb){
+    for(let i=0;i<nb;i++){
+        let flocon = document.createElement("div");
+        flocon.className = "snowflake";
+        flocon.style.left=Math.random()*100+"%";
+        flocon.style.fontSize=(Math.random()*40+40)+"px";
+        flocon.style.animationDuration=(5+Math.random()*5)+"s";
+        flocon.textContent="❄";
+        document.body.appendChild(flocon);
+    }
+}
+// ----------------------
+// FLOCONS DE NEIGE
+// ----------------------
+function creerFlocons2(nb){
+    for(let i=0;i<nb;i++){
+        let flocon = document.createElement("div");
+        flocon.className = "snowflake";
+        flocon.style.left=Math.random()*100+"%";
+        flocon.style.fontSize=(Math.random()*10+10)+"px";
+        flocon.style.animationDuration=(5+Math.random()*20)+"s";
+        flocon.textContent="❄";
+        document.body.appendChild(flocon);
+    }
+}
+creerFlocons(50);
+creerFlocons2(80);
+</script>
+</body>
+</html>
